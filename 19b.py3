@@ -1,36 +1,62 @@
 import re
 from collections import defaultdict
 
+
+# preprocess to one char each
+R = re.compile('e|[A-Z][a-z]*')
+N = {}
+def prep(s):
+	res = ''
+	for t in re.finditer(R, s):
+		n = t.group()
+		if n == 'e':
+			res += n
+		else:
+			if n not in N:
+				N[n] = chr(65+len(N))
+			res += N[n]
+	return res
+
 m = {}
-maxlen = 0
 for line in open('input19.txt').readlines():
 	line = line.strip()
 	if '=>' in line:
 		line = line.split()
-		maxlen = max(maxlen, len(line[2]))
-		m[line[2]] = line[0]
+		k = prep(line[2])
+		if k in m:
+			raise ValueError()
+		m[k] = prep(line[0])
 	elif not line:
 		pass
 	else:
-		S = line
+		S = prep(line)
 
-Z = set()
-def dfs_expand(s, d):
-	print(s, d)
+print(S)
+for k in sorted(m.keys()):
+	print(k, '=>', m[k])
 
-	if s == 'e':
-		print(d)
-		return
+while 1:
+	got = False
 
-	for i in range(len(s)):
-		if 'A'<=s[i]<='Z':
-			for j in range(min(i+maxlen, len(s))-1, i, -1):
-				k = s[i:j]
-				if k in m:
-					v = m[k]
-					z = s[:i] + v + s[j:]
-					if z not in Z:
-						Z.add(z)
-						dfs_expand(z, d+1)
+	print('cur input: {}'.format(S))
+	for k in m:
+		pos = 0
+		while 1:
+			pos = S.find(k, pos)
+			if pos >= 0:
+				print('- {} at {}'.format(k, pos))
+				pos += 1
+			else: break
 
-dfs_expand(S, 0)
+
+	for i in range(1, len(S)+1):
+		for j in range(i-1, -1, -1):
+			k = S[j:i]
+			if k in m:
+				S = S[:j] + m[k] + S[i:]
+				got = True
+				break
+		if got: break
+	if not got: break
+print(S)
+
